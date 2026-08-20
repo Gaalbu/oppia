@@ -26,6 +26,7 @@ import {SuperAdmin, SuperAdminFactory} from '../user/super-admin';
 import {LoggedOutUser, LoggedOutUserFactory} from '../user/logged-out-user';
 import {LoggedInUser, LoggedInUserFactory} from '../user/logged-in-user';
 import {VoiceoverAdmin, VoiceoverAdminFactory} from '../user/voiceover-admin';
+import {VoiceoverSubmitterFactory} from '../user/voiceover-submitter';
 import {
   ExplorationEditor,
   ExplorationEditorFactory,
@@ -52,6 +53,7 @@ const USER_ROLE_MAPPING = {
   [ROLES.RELEASE_COORDINATOR]: ReleaseCoordinatorFactory,
   [ROLES.TOPIC_MANAGER]: TopicManagerFactory,
   [ROLES.VOICEOVER_ADMIN]: VoiceoverAdminFactory,
+  [ROLES.VOICEOVER_SUBMITTER]: VoiceoverSubmitterFactory,
 } as const;
 
 // Roles that are not reflected on the admin page after assignment.

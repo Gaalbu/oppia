@@ -56,6 +56,8 @@ const addSolutionButton = 'button.e2e-test-oppia-add-solution-button';
 const submitAnswerButton = '.e2e-test-submit-answer-button';
 const submitSolutionButton = 'button.e2e-test-submit-solution-button';
 const textInputInteractionButton = 'div.e2e-test-interaction-tile-TextInput';
+const interactionDiv = '.e2e-test-interaction';
+const textInputField = '.e2e-test-text-input';
 
 const saveDraftButton = 'button.e2e-test-save-draft-button';
 const commitMessageSelector = 'textarea.e2e-test-commit-message-input';
@@ -117,6 +119,9 @@ const responseModalHeaderSelector = '.e2e-test-add-response-modal-header';
 const addAnotherResponseButton = 'button.e2e-test-add-another-response';
 
 const mobileNavbarPane = '.oppia-exploration-editor-tabs-dropdown';
+const previewTabButton = '.e2e-test-preview-tab';
+const previewTabContainer = '.e2e-test-preview-tab-container';
+const mobilePreviewTabButton = '.e2e-test-mobile-preview-button';
 const mobileTranslationTabButton = '.e2e-test-mobile-translation-tab';
 const mainTabButton = '.e2e-test-main-tab';
 const mobileMainTabButton = '.e2e-test-mobile-main-tab';
@@ -518,6 +523,19 @@ export class ExplorationEditor extends BaseUser {
     await this.clickOnElementWithSelector(saveInteractionButton);
     await this.expectElementToBeVisible(addInteractionModalSelector, false);
     showMessage('Text input interaction has been added successfully.');
+  }
+
+  /**
+   * Updates the optional text input interaction content.
+   * @param content - The text input interaction content.
+   */
+  async updateTextInputInteraction(content: string): Promise<void> {
+    await this.expectElementToBeVisible(interactionDiv);
+    await this.clickOnElementWithSelector(interactionDiv);
+    await this.clickOnElementWithSelector(textInputField);
+    await this.typeInInputField(textInputField, content);
+    await this.clickOnElementWithSelector(saveInteractionButton);
+    await this.expectElementToBeVisible(addInteractionModalSelector, false);
   }
 
   /**
@@ -1119,6 +1137,36 @@ export class ExplorationEditor extends BaseUser {
     await this.page.waitForURL(url => url.href.includes(`${baseUrl}/create/`), {
       timeout: 10000,
     });
+  }
+
+  /**
+   * Navigates to the preview tab.
+   */
+  async navigateToPreviewTab(): Promise<void> {
+    if (this.isViewportAtMobileWidth()) {
+      await this.waitForPageToFullyLoad();
+      const mobileOptions = await this.page.$(mobileNavbarOptions);
+      if (!mobileOptions) {
+        await this.clickOnElementWithSelector(mobileOptionsButtonSelector);
+      }
+
+      const isDropdownOpen = await this.isElementVisible(
+        `${mobileNavbarPane}.show`
+      );
+      if (!isDropdownOpen) {
+        await this.clickOnElementWithSelector(mobileNavbarDropdown);
+      }
+
+      await this.expectElementToBeVisible(mobilePreviewTabButton);
+      await this.clickOnElementWithSelector(mobilePreviewTabButton);
+    } else {
+      await this.expectElementToBeVisible(previewTabButton);
+      await this.clickOnElementWithSelector(previewTabButton);
+    }
+
+    await this.page.waitForURL(url => url.href.includes('#/preview/'));
+    await this.waitForPageToFullyLoad();
+    await this.expectElementToBeVisible(previewTabContainer);
   }
 
   /**

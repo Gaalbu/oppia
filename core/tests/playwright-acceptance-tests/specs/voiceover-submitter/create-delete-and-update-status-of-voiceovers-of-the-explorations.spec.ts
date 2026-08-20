@@ -19,6 +19,7 @@
  * VS.1. Add, remove, and update the status of a single voiceover.
  */
 
+import {test} from '@playwright/test';
 import testConstants from '../../utilities/common/test-constants';
 import {UserFactory} from '../../utilities/common/user-factory';
 import {CurriculumAdmin} from '../../utilities/user/curriculum-admin';
@@ -33,7 +34,9 @@ import {VoiceoverSubmitter} from '../../utilities/user/voiceover-submitter';
 
 const ROLES = testConstants.Roles;
 
-describe('Voiceover Submitter', function () {
+test.describe.configure({mode: 'serial'});
+
+test.describe('Voiceover Submitter', function () {
   let voiceoverSubmitter: VoiceoverSubmitter &
     ExplorationEditor &
     LoggedOutUser;
@@ -41,17 +44,20 @@ describe('Voiceover Submitter', function () {
   let releaseCoordinator: ReleaseCoordinator;
   let explorationId: string;
 
-  beforeAll(async function () {
+  test.beforeAll(async function ({browser}) {
+    test.setTimeout(600000);
     // Create users with the required roles.
     curriculumAdm = await UserFactory.createNewUser(
       'curriculumAdm',
       'curriculum_admin@example.com',
+      browser,
       [ROLES.CURRICULUM_ADMIN, ROLES.VOICEOVER_ADMIN]
     );
 
     releaseCoordinator = await UserFactory.createNewUser(
       'releaseCoordinator',
       'release_coordinator@example.com',
+      browser,
       [ROLES.RELEASE_COORDINATOR]
     );
 
@@ -119,14 +125,17 @@ describe('Voiceover Submitter', function () {
     voiceoverSubmitter = await UserFactory.createNewUser(
       'voiceoverSubmitter',
       'voiceover_submitter@example.com',
+      browser,
       [ROLES.VOICEOVER_SUBMITTER],
       explorationId
     );
-  }, 600000);
+  });
 
-  it('should see content for voiceover in exploration language', async function () {
+  test('should see content for voiceover in exploration language', async function () {
     // Navigate to the exploration editor.
-    await voiceoverSubmitter.navigateToExplorationEditor(explorationId);
+    await voiceoverSubmitter.goto(
+      `${testConstants.URLs.BaseURL}/create/${explorationId}`
+    );
     await voiceoverSubmitter.dismissWelcomeModal();
 
     // Navigate to translation tab.
@@ -161,7 +170,7 @@ describe('Voiceover Submitter', function () {
     await voiceoverSubmitter.expectSolutionVoiceoverToContain('5');
   });
 
-  it('should see correct accessibility labels in the voiceover translation tab', async function () {
+  test('should see correct accessibility labels in the voiceover translation tab', async function () {
     // Select "Content" voiceover option.
     await voiceoverSubmitter.selectVoiceoverContentType('Content');
 
@@ -213,7 +222,9 @@ describe('Voiceover Submitter', function () {
     await voiceoverSubmitter.saveExplorationDraft();
   });
 
-  it('should be able to add and remove voiceovers to explorations', async function () {
+  test('should be able to add and remove voiceovers to explorations', async function () {
+    test.setTimeout(450000);
+
     // Add voiceover in English (India).
     await voiceoverSubmitter.addVoiceoverToContent(
       'English',
@@ -239,8 +250,7 @@ describe('Voiceover Submitter', function () {
     await voiceoverSubmitter.navigateToTranslationsTab();
 
     await voiceoverSubmitter.expectScreenshotToMatch(
-      'voiceoverPageWithOneVoiceoverAddEnIndia',
-      __dirname
+      'voiceoverPageWithOneVoiceoverAddEnIndia'
     );
     await voiceoverSubmitter.expectVoiceoverIsPlayableInTranslationTab();
     await voiceoverSubmitter.saveExplorationDraft();
@@ -261,9 +271,9 @@ describe('Voiceover Submitter', function () {
     await voiceoverSubmitter.navigateToPreviewTab();
     await voiceoverSubmitter.expandVoiceoverBar();
     await voiceoverSubmitter.expectVoiceoverPlayButtonToBe('disabled');
-  }, 450000);
+  });
 
-  it('should not be able to upload a non-audio file', async function () {
+  test('should not be able to upload a non-audio file', async function () {
     await voiceoverSubmitter.navigateToTranslationsTab();
     await voiceoverSubmitter.clickOnAddManualVoiceoverButton();
     await voiceoverSubmitter.uploadFile(testConstants.data.profilePicture);
@@ -272,7 +282,7 @@ describe('Voiceover Submitter', function () {
     );
   });
 
-  it('should not be able to upload audio file larger than 5 minutes', async function () {
+  test('should not be able to upload audio file larger than 5 minutes', async function () {
     await voiceoverSubmitter.uploadFile(
       testConstants.data.VoiceoverEnglishIndiaOver5Min
     );
@@ -282,7 +292,7 @@ describe('Voiceover Submitter', function () {
     );
   });
 
-  it('should be able to mark/unmark voiceover as stale', async function () {
+  test('should be able to mark/unmark voiceover as stale', async function () {
     // Mark voiceover as stale.
     await voiceoverSubmitter.uploadFile(
       testConstants.data.VoiceoverEnglishIndia
@@ -292,14 +302,14 @@ describe('Voiceover Submitter', function () {
     await voiceoverSubmitter.expectCurrentVoiceStatusButtonToBe('needs update');
     // Stale voiceovers should count as incomplete.
     await voiceoverSubmitter.expectTranslationNumericalStatusToBe('1/7');
-    await voiceoverSubmitter.expectNodeWariningSignToBeVisible(true);
+    await voiceoverSubmitter.expectNodeWarningSignToBeVisible(true);
 
     // Mark voiceover as up to date.
     await voiceoverSubmitter.toggleAudioNeedsUpdateButton();
     await voiceoverSubmitter.expectCurrentVoiceStatusButtonToBe('upto date');
   });
 
-  afterAll(async function () {
+  test.afterAll(async function () {
     await UserFactory.closeAllBrowsers();
   });
 });
