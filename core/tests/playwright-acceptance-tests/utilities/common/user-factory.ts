@@ -145,7 +145,8 @@ export class UserFactory {
    * @param {TRoles} roles - The roles to assign to the user.
    * @param {Browser} browser - The Playwright browser instance.
    * @param {string | string[]} args - The arguments to pass to the role
-   *     assignment function. For Blog Post Editor, it uses the blog admin page.
+   *     assignment function. For Topic Manager, it should be the topic
+   *     name. For Voiceover Submitter, it should be the exploration ID.
    * @returns {TUser & MultipleRoleIntersection<TRoles>} - The user with
    *     the roles assigned.
    */
@@ -176,6 +177,17 @@ export class UserFactory {
             user.username,
             ROLES.TOPIC_MANAGER,
             args as string
+          );
+          break;
+        case ROLES.VOICEOVER_SUBMITTER:
+          if (typeof args !== 'string') {
+            throw new Error(
+              'Exploration ID is required to assign a voiceover submitter.'
+            );
+          }
+          await superAdminInstance.addVoiceoverArtistToExplorationWithID(
+            args,
+            user.username
           );
           break;
         default:
@@ -290,8 +302,13 @@ export class UserFactory {
       browser
     );
 
-    superAdminInstance = UserFactory.composeUserWithRoles(user, [
+    const superAdmin = UserFactory.composeUserWithRoles(user, [
       SuperAdminFactory(user.page),
+    ]);
+    await superAdmin.assignRoleToUser('superAdm', ROLES.VOICEOVER_ADMIN);
+    await superAdmin.expectUserToHaveRole('superAdm', ROLES.VOICEOVER_ADMIN);
+
+    superAdminInstance = UserFactory.composeUserWithRoles(superAdmin, [
       VoiceoverAdminFactory(user.page),
     ]);
 
